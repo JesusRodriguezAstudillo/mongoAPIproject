@@ -1,0 +1,135 @@
+@model IEnumerable<mongoAPI.Models.Item>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+<a asp-action="Create">create</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Type)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.price)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Type)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.price)
+            </td>
+            <td>
+                <!--a href="#" onclick="">Modal Edit</a--> |
+                <a asp-action="Edit" asp-route-id="@item._id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item._id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item._id">Delete</a>
+                <img style="width: 150px" src="something.png" onerror="this.onerror=null;this.src='\\images\\no-image-available.png'">
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+
+<div style="margin: auto">
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="addItem">
+    Add Item
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <table>
+                    <tr><td>Name: <input type="text" id="productName"></td></tr>
+                    <tr><td>Type: <input type="text" id="productType"></td></tr>
+                    <tr><td>Price: <input type="text" id="productPrice"></td></tr>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="add-item">Save changes</button>
+        </div>
+        </div>
+    </div>
+    </div>
+    </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script type="text/javascript">
+    function modifyString(str){
+            const stringRegex = /\w+/g;
+            const stringsArr = str.match(stringRegex);
+            const removeWhiteSpaces = /^\s+|\s$/g;
+ 
+            let temp = stringsArr[0].toLowerCase();
+            temp = temp[0].toUpperCase() + temp.substr(1, temp.length);
+            let result = temp;
+ 
+            for(let i = 1; i < stringsArr.length; i++)
+            {
+                temp = stringsArr[i].toLowerCase();
+                temp = temp[0].toUpperCase() + temp.substr(1, temp.length);
+                result = result + ' ' + temp;
+            }
+
+            return result;
+    }
+
+    $("body").on("click", "#add-item", function() {
+        console.log("Trying to add an item");
+        if($("#productName").val() == "" || $("#productType").val() == "" || $("#productPrice").val() == "")
+        {
+            alert("Some values are missing. Make sure that all fields are entered.");
+        }
+        else
+        {
+            let productName = modifyString($("#productName").val());
+            let productType = modifyString($("#productType").val());
+
+            console.log(productName);
+            console.log(productType);
+            let productPrice = $("#productPrice").val();
+            var itemData = {
+                Name: productName,
+                Type: productType,
+                price: productPrice
+            };
+            
+            $.ajax({
+                type: "POST",
+                url: "/Items/ModalInsert",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(itemData),
+                datatype:"json",
+                success: function(result) {
+                    console.log("got: ");
+                    console.log(result);
+                }
+            });
+        }
+    })
+</script>

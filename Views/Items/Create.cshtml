@@ -3,53 +3,109 @@
 
 
 @{
-    Item x = (Item)@TempData["present-item"];
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<h1>Create a New Item</h1>
 
-<h4>Item</h4>
+<div id="error-section"></div>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <!--form asp-action="Create"-->
+        <form asp-action="Create" enctype="multipart/form-data" id="create-form">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" class="form-control test" id="item-name"/>
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
-            @if(x._id != "")
-            {
-                <p>That item is already in the database. If you would like to edit this item follow <a asp-action="Edit" asp-route-id="@x._id"><strong>this link</strong></a></p>
-            }
             <div class="form-group">
                 <label asp-for="Type" class="control-label"></label>
-                <input asp-for="Type" class="form-control" />
+                <input asp-for="Type" class="form-control test" />
                 <span asp-validation-for="Type" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="price" class="control-label"></label>
-                <input asp-for="price" class="form-control" />
+                <input asp-for="price" class="form-control test" />
                 <span asp-validation-for="price" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label for="item-image">Add an image to the item</label>
-                <input type="file" class="form-control" id="item-image" name="item-image" accept="image/jpeg, image/png">
+                <label for="item-image">Add an image to the item. If no image is provided, the default image will be displayed.</label>
+                <input type="file" id="item-image" name="item-image" accept="image/jpg, image/png">
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="button" id="create-item" value="Finish Adding Item" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a class="btn btn-primary" asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() { 
+            $("#create-item").click(function(event) {
+                event.preventDefault();
+
+                if($("#create-form").valid()) {
+
+                    let imgFile = $("#item-image").get(0);
+                    let d = new FormData();
+
+                    $(".test").each((x,y) => {
+                        d.append($(y).attr("name"), $(y).val());
+                    });
+
+                    if(imgFile.files.length != 0) {
+                        let img = imgFile.files;
+                        var fileName = $("#item-name").val() + ".png";
+                        console.log("in the ajax the name is: ", fileName)
+                        d.append("f",img[0], fileName);
+                    } else {
+                        d.append("f", "");
+                    }
+              
+                    $.ajax({
+                        type: "POST",
+                        url: "Create",
+                        contentType: false,
+                        processData: false,
+                        data: d,
+                        success: function(message) {
+                            console.log(message);
+                            //window.location.href = message;
+                            if(message.type == "presentItem") { // if the item is already in the database, prompt a redirect to the edit page
+                                console.log(message.nextAction);
+                                //window.location.reload();
+                                console.log($("#error-section").children().length);
+                                if($("#error-section").children().length == 0) {
+                                    let $warningMessage = document.createElement("p");
+                                    $warningMessage.innerHTML = 'The item that you tried to create already exists follow <a href="/Items/Edit/'+ message.nextAction._id + '"><strong>this link</strong></a>';
+                                    document.getElementById("error-section").appendChild($warningMessage);
+                                }
+                            } 
+                            else if(message.type == "newItem") { // if the item is new redirect to the index page
+                                window.location.href = message.nextAction;
+                            }
+                        },
+                        error: function(message) {
+                            console.log(message);
+                        },
+                    });
+
+                    return true
+                }
+                else {
+                    return false;
+                }
+            });
+        });
+    </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

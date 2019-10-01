@@ -4,8 +4,8 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
-<a asp-action="Create">create</a>
+<h1>All Items</h1>
+<a class="btn btn-primary" asp-action="Create">Add New Item</a>
 <table class="table">
     <thead>
         <tr>
@@ -26,6 +26,7 @@
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.Name)
+                <img style="width: 100px" src="\images\@(item.Name).png" class="item-image" id="@item.Name" onerror="this.onerror=null; this.src='/images/no-image-available.png'">
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Type)
@@ -34,49 +35,14 @@
                 @Html.DisplayFor(modelItem => item.price)
             </td>
             <td>
-                <!--a href="#" onclick="">Modal Edit</a--> |
-                <a asp-action="Edit" asp-route-id="@item._id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item._id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item._id">Delete</a>
-                <img style="width: 150px" src="something.png" onerror="this.onerror=null;this.src='\\images\\no-image-available.png'">
+                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@item._id">Edit</a> 
+                <a class="btn btn-primary" asp-action="Details" asp-route-id="@item._id">Delete</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
 
-
-<div style="margin: auto">
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" id="addItem">
-    Add Item
-    </button>
-
-    <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <div class="modal-body">
-            <table>
-                    <tr><td>Name: <input type="text" id="productName"></td></tr>
-                    <tr><td>Type: <input type="text" id="productType"></td></tr>
-                    <tr><td>Price: <input type="text" id="productPrice"></td></tr>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="add-item">Save changes</button>
-        </div>
-        </div>
-    </div>
-    </div>
-    </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script type="text/javascript">

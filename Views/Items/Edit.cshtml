@@ -4,41 +4,100 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
-
-<h4>Item</h4>
+<h4>Edit Current Item: @Model.Name</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" enctype="multipart/form-data" class="item-form">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="_id" />
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" class="form-control update" id="item-name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Type" class="control-label"></label>
-                <input asp-for="Type" class="form-control" />
+                <input asp-for="Type" class="form-control update" />
                 <span asp-validation-for="Type" class="text-danger"></span>
+                
             </div>
             <div class="form-group">
                 <label asp-for="price" class="control-label"></label>
-                <input asp-for="price" class="form-control" />
+                <input asp-for="price" class="form-control update" />
                 <span asp-validation-for="price" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <p>Current image:</p>
+                <img style="width: 150px; height: 150px"src="\images\@(Model.Name).png" onerror="this.onerror=null;this.src='/images/no-image-available.png'">
+                <label for="edit-item-image">Add or change the image of the item</label>
+                <input type="file" id="edit-item-image" name="edit-item-image" accept="image/jpg, image/png">
+            </div>
+            <div class="form-group">
+                <input type="button" id="update-item" value="Finish Updating Item" class="btn btn-primary update-item" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a class="btn btn-primary" asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+
+            $(".update-item").click((event) => {
+                event.preventDefault();
+
+                if(!$(".item-form").valid()) {
+                    console.log("the form is not valid");
+                    return false;
+                }
+                else{
+                    event.preventDefault();
+                    let newImage = $("#edit-item-image").get(0); 
+                
+                    let updatedData = new FormData();
+                    updatedData.append("id", '@Html.Raw(Model._id)');
+                    updatedData.append("_id", '@Html.Raw(Model._id)');
+
+                    $(".update").each((x,y) => {
+                        updatedData.append($(y).attr("name"), $(y).val());
+                    });
+
+                    // if there was an image added to the item
+                    if(newImage.files.length != 0) {
+                        let newImageFile = newImage.files;
+                        let imageName = $("#item-name").val() + ".png";
+                        updatedData.append("imgFile", newImageFile[0], imageName);
+                    }
+                    else {
+                        updatedData.append("imgFile", "");
+                    }
+
+                    $.ajax({
+                        type: "POST",
+                        url: '@Html.Raw(Model._id)',
+                        contentType: false,
+                        processData: false,
+                        data: updatedData,
+                        success: function(message) {
+                            window.location.href = message;
+                        },
+                        error: function(message) {
+                            console.log(message);
+                            console.log("something went wrong");
+                        }
+                    });
+
+                    return true;
+                }
+            });
+        });
+    </script>
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

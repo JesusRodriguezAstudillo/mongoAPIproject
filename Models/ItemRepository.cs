@@ -25,7 +25,7 @@ namespace mongoAPI.Models
         {
             try
             {
-                await db.Item.ReplaceOneAsync(filter: g => g.Name == item.Name, replacement: item);
+                await db.Item.ReplaceOneAsync(filter: g => g._id == item._id, replacement: item);
             }
             catch
             {
@@ -33,12 +33,12 @@ namespace mongoAPI.Models
             }
         }
 
-        public async Task Delete(string name)
+        public async Task Delete(string id)
         {
             try
             {
-                FilterDefinition<Item> itemData = Builders<Item>.Filter.Eq("Name", name);
-                await db.Item.DeleteOneAsync(itemData);
+                FilterDefinition<Item> itemData = Builders<Item>.Filter.Eq("_id", id);
+                await db.Item.DeleteOneAsync(itemData);               
             }
             catch
             {

@@ -8,12 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using mongoAPI.Models;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace mongoAPI.Controllers
 {
     public class ItemsController : Controller
     {
+        private readonly IHostingEnvironment _env;        
         private readonly IItemRepository _itemDataAccess = new ItemRepository();
+        
+        public ItemsController(IHostingEnvironment hostingEnvironment) {
+            _env = hostingEnvironment;
+        }
+        
         public async Task<ActionResult> Index()
         {
             IEnumerable<Item> items = await _itemDataAccess.GetItems();
@@ -31,13 +39,11 @@ namespace mongoAPI.Controllers
             var x = await _itemDataAccess.GetItem(i.Name);
             if(x == null)
             {
-                Console.WriteLine("the item not in database");
                 await _itemDataAccess.Add(i);
                 return Json("New Item");
             }
             else
             {
-                Console.WriteLine("item in database");
                 return Json("Item already in database");
             }
 
@@ -64,13 +70,6 @@ namespace mongoAPI.Controllers
 
         public IActionResult Create()
         {
-            Item temp = new Item();
-            temp._id = "";
-            temp.Name = "";
-            temp.Type = "";
-            temp.price = 0;
-            TempData["present-item"] = temp;
-            
             return View();
         }
     
@@ -82,8 +81,9 @@ namespace mongoAPI.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("_id,Name,Type,price")] Item item, IFormFile f)
+        //public async Task<IActionResult> Create([Bind("_id,Name,Type,price")] Item item)
         {
             Regex r = new Regex(@"(^|\s)\S");
             item.Name = item.Name.ToLower();
@@ -92,19 +92,32 @@ namespace mongoAPI.Controllers
             item.Name = r.Replace(item.Name, new MatchEvaluator(capitalFirstLetter));
             item.Type = r.Replace(item.Type, new MatchEvaluator(capitalFirstLetter));
 
-            Console.WriteLine(f.Name);
-
+                Console.WriteLine("\n\n tes1\n\n");
             var x = await _itemDataAccess.GetItem(item.Name, true);
 
+                Console.WriteLine("\n\n tes2\n\n");
             if(ModelState.IsValid && x == null)
             {
                 await _itemDataAccess.Add(item);
-                return RedirectToAction("Index");
+                     
+                if(f != null && f.Length > 0)
+                {
+                    string imgFileName = item.Name + ".png";
+                    string imgFilePath = Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images", imgFileName);
+                    
+                    using(FileStream imagesFileStream = new FileStream(imgFilePath, FileMode.Create))
+                    {
+                        await f.CopyToAsync(imagesFileStream);
+                    }
+                }
+
+                return Json( new { type = "newItem", nextAction = Url.Action("Index", "Items") } );
             }
             else if(x != null) {
                 ModelState.AddModelError("Name", "The item already exists.");
-                TempData["present-item"] = x;
-                return View(item);
+                //TempData["present-item"] = x; // this line is giving me an error on the other side of the view
+                Console.WriteLine("\n\n tes3\n\n");
+                return Json( new { type = "presentItem", nextAction = x } );
             }
             else
             {
@@ -127,6 +140,55 @@ namespace mongoAPI.Controllers
             }
 
             return View(item);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(string id, [Bind("_id, Name, Type, price")] Item item, IFormFile imgFile)
+        {
+            Regex r = new Regex(@"(^|\s)\S");
+            item.Name = item.Name.ToLower();
+            item.Type = item.Type.ToLower();
+
+            item.Name = r.Replace(item.Name, new MatchEvaluator(capitalFirstLetter));
+            item.Type = r.Replace(item.Type, new MatchEvaluator(capitalFirstLetter));
+
+            if(id != item._id)
+            {
+                return Json( new { data = "notFound" } ) ;
+            }
+
+            if(ModelState.IsValid)
+            {
+                await _itemDataAccess.Update(item);
+
+                if(imgFile != null && imgFile.Length > 0)
+                {
+                    string imgFileName = item.Name + ".png";
+                    string imgFilePath = Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images", imgFileName);
+ 
+                    using(FileStream imageFileStream = new FileStream(imgFilePath, FileMode.Create))
+                    {
+                        await imgFile.CopyToAsync(imageFileStream);
+                    }
+                }
+
+                //return RedirectToAction("Index");
+                return Json(Url.Action("Index", "Items"));
+            }
+
+            //return View(item);
+            return Json(new { data = "invalidItem" });;
+        }
+        public async Task<IActionResult> Delete(string id) 
+        {
+            if(id == null) 
+            {
+                return NotFound();
+            }
+
+            await _itemDataAccess.Delete(id);
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
@@ -201,8 +263,8 @@ namespace mongoAPI.Controllers
                 return NotFound();
             }
             return View(item);
-        }
-
+        }*/
+        /* 
         // POST: Items/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
